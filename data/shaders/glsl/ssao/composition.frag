@@ -17,13 +17,20 @@ layout (location = 0) in vec2 inUV;
 
 layout (location = 0) out vec4 outFragColor;
 
+layout(binding = 16) uniform DRS_PARAM {
+    lowp vec2 drs_ratio;
+} drs_param;
+#define DYNAMIC_RESOLUTION_UV(uv) (uv * drs_param.drs_ratio)
+
 void main() 
 {
-	vec3 fragPos = texture(samplerposition, inUV).rgb;
-	vec3 normal = normalize(texture(samplerNormal, inUV).rgb * 2.0 - 1.0);
-	vec4 albedo = texture(samplerAlbedo, inUV);
+    vec2 _inUV = DYNAMIC_RESOLUTION_UV(inUV);
+    
+	vec3 fragPos = texture(samplerposition, _inUV).rgb;
+	vec3 normal = normalize(texture(samplerNormal, _inUV).rgb * 2.0 - 1.0);
+	vec4 albedo = texture(samplerAlbedo, _inUV);
 	 
-	float ssao = (uboParams.ssaoBlur == 1) ? texture(samplerSSAOBlur, inUV).r : texture(samplerSSAO, inUV).r;
+	float ssao = (uboParams.ssaoBlur == 1) ? texture(samplerSSAOBlur, _inUV).r : texture(samplerSSAO, _inUV).r;
 
 	vec3 lightPos = vec3(0.0);
 	vec3 L = normalize(lightPos - fragPos);

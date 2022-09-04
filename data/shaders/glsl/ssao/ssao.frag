@@ -21,11 +21,18 @@ layout (location = 0) in vec2 inUV;
 
 layout (location = 0) out float outFragColor;
 
+layout(binding = 16) uniform DRS_PARAM {
+    lowp vec2 drs_ratio;
+} drs_param;
+#define DYNAMIC_RESOLUTION_UV(uv) (uv * drs_param.drs_ratio)
+
 void main() 
 {
+    vec2 _inUV = DYNAMIC_RESOLUTION_UV(inUV);
+    
 	// Get G-Buffer values
-	vec3 fragPos = texture(samplerPositionDepth, inUV).rgb;
-	vec3 normal = normalize(texture(samplerNormal, inUV).rgb * 2.0 - 1.0);
+	vec3 fragPos = texture(samplerPositionDepth, _inUV).rgb;
+	vec3 normal = normalize(texture(samplerNormal, _inUV).rgb * 2.0 - 1.0);
 
 	// Get a random vector using a noise lookup
 	ivec2 texDim = textureSize(samplerPositionDepth, 0); 
@@ -53,7 +60,9 @@ void main()
 		offset.xyz /= offset.w; 
 		offset.xyz = offset.xyz * 0.5f + 0.5f; 
 		
-		float sampleDepth = -texture(samplerPositionDepth, offset.xy).w; 
+		vec2 _offset_uv = DYNAMIC_RESOLUTION_UV(offset.xy);
+		
+		float sampleDepth = -texture(samplerPositionDepth, _offset_uv).w; 
 
 		float rangeCheck = smoothstep(0.0f, 1.0f, SSAO_RADIUS / abs(fragPos.z - sampleDepth));
 		occlusion += (sampleDepth >= samplePos.z + bias ? 1.0f : 0.0f) * rangeCheck;           
